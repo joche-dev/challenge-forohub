@@ -1,7 +1,8 @@
 package com.forohub.api.controller;
 
 import com.forohub.api.domain.topico.*;
-import jakarta.persistence.EntityNotFoundException;
+import com.forohub.api.domain.usuario.UsuarioRepository;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,55 +17,43 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/topicos")
+@SecurityRequirement(name = "bearer-key")
 public class TopicoController {
 
     @Autowired
-    private TopicoRepository topicoRepository;
+    private TopicoService topicoService;
 
     @GetMapping
-    public ResponseEntity<Page<DatosListarTopico>> listarTopicos(@RequestParam(required = false) String curso, @RequestParam(required = false) Integer anio,
+    public ResponseEntity<Page<DatosListarTopico>> listarTopicos(@RequestParam(required = false) String curso,
+                                                                 @RequestParam(required = false) Integer anio,
                                                                  @PageableDefault(size = 10) Pageable paginacion){
-        return ResponseEntity.ok(topicoRepository.findByCursoYAnio(curso, anio, paginacion).map(DatosListarTopico::new));
+        return ResponseEntity.ok(topicoService.listarTopicos(curso, anio, paginacion));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DatosRespuestaTopico> datosTopico(@PathVariable Long id){
-        Topico topico = topicoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("El tópico con ID " + id + " no fue encontrado"));
-        DatosRespuestaTopico datosRespuestaTopico = new DatosRespuestaTopico(
-                topico.getId(), topico.getTitulo(), topico.getMensaje(), topico.getFecha(),
-                topico.getAutor(), topico.getCurso(), topico.getStatus());
-        return ResponseEntity.ok(datosRespuestaTopico);
+        return ResponseEntity.ok(topicoService.obtenerDatosTopico(id));
     }
 
     @PostMapping
-    public ResponseEntity<DatosRespuestaTopico> registrarTopico(@RequestBody @Valid DatosRegistroTopico datosRegistroTopico,
-                                                                UriComponentsBuilder uriComponentsBuilder){
-        Topico topico = topicoRepository.save(new Topico(datosRegistroTopico));
-        DatosRespuestaTopico datosRespuestaTopico = new DatosRespuestaTopico(
-                topico.getId(), topico.getTitulo(), topico.getMensaje(), topico.getFecha(),
-                topico.getAutor(), topico.getCurso(), topico.getStatus());
-        URI url = uriComponentsBuilder.path("/topicos/{id}").buildAndExpand(topico.getId()).toUri();
+    public ResponseEntity<DatosRespuestaTopico> registrarTopico(
+            @RequestBody @Valid DatosRegistroTopico datosRegistroTopico, UriComponentsBuilder uriComponentsBuilder) {
+        DatosRespuestaTopico datosRespuestaTopico = topicoService.registrarTopico(datosRegistroTopico);
+        URI url = uriComponentsBuilder.path("/topicos/{id}").buildAndExpand(datosRespuestaTopico.id()).toUri();
         return ResponseEntity.created(url).body(datosRespuestaTopico);
     }
 
     @PutMapping
     @Transactional
-    public ResponseEntity<DatosRespuestaTopico> actualizarTopico(@RequestBody @Valid DatosActualizarTopico datosActualizarTopico){
-        Topico topico = topicoRepository.findById(datosActualizarTopico.id())
-                .orElseThrow(() -> new EntityNotFoundException("El tópico con ID " + datosActualizarTopico.id() + " no fue encontrado"));
-        topico.actualizarDatos(datosActualizarTopico);
-        DatosRespuestaTopico datosRespuestaTopico = new DatosRespuestaTopico(
-                topico.getId(), topico.getTitulo(), topico.getMensaje(), topico.getFecha(),
-                topico.getAutor(), topico.getCurso(), topico.getStatus());
-        return ResponseEntity.ok(datosRespuestaTopico);
+    public ResponseEntity<DatosRespuestaTopico> actualizarTopico(
+            @RequestBody @Valid DatosActualizarTopico datosActualizarTopico) {
+        return ResponseEntity.ok(topicoService.actualizarTopico(datosActualizarTopico));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity eliminarTopico(@PathVariable Long id) {
-        Topico topico = topicoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("El tópico con ID " + id + " no fue encontrado"));
-        topicoRepository.deleteById(id);
+    @Transactional
+    public ResponseEntity<Void> eliminarTopico(@PathVariable Long id) {
+        topicoService.eliminarTopico(id);
         return ResponseEntity.noContent().build();
     }
 }

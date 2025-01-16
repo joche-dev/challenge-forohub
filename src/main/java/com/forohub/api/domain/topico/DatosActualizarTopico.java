@@ -11,8 +11,6 @@ public record DatosActualizarTopico(
         @NotBlank
         String mensaje,
         @NotBlank
-        String autor,
-        @NotBlank
         String curso,
         @NotNull
         Boolean status
