@@ -2,7 +2,6 @@
 
 ## Descripción
 ForoHub es una API RESTful que implementa un CRUD para la gestión de tópicos en un foro, con persistencia de datos en MySQL. Además, utiliza JWT para la autenticación y autorización de usuarios, garantizando un acceso seguro a los recursos.
-Este proyeEste proyecto es una API RESTful que implementa un CRUD para la gestión de tópicos, con persistencia de datos en MySQL. Además, utiliza JWT para la autenticación y autorización de usuarios, garantizando un acceso seguro a los recursos.
 
 ## Funcionalidades
 - **CRUD de Tópicos**: Crear, actualizar, eliminar, listar y filtrar tópicos.
